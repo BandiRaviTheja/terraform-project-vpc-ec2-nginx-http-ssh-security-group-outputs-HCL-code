@@ -8,7 +8,6 @@ pipeline {
 
     options {
         timestamps()
-        ansiColor('xterm')
     }
 
     stages {
@@ -34,26 +33,14 @@ pipeline {
                     [$class: 'AmazonWebServicesCredentialsBinding',
                      credentialsId: 'aws-creds']
                 ]) {
-                    sh '''
-                        terraform init
-                    '''
+                    sh 'terraform init'
                 }
             }
         }
 
         stage('Terraform Validate') {
             steps {
-                sh '''
-                    terraform validate
-                '''
-            }
-        }
-
-        stage('Terraform Format Check') {
-            steps {
-                sh '''
-                    terraform fmt -check || true
-                '''
+                sh 'terraform validate'
             }
         }
 
@@ -63,9 +50,7 @@ pipeline {
                     [$class: 'AmazonWebServicesCredentialsBinding',
                      credentialsId: 'aws-creds']
                 ]) {
-                    sh '''
-                        terraform plan -out=tfplan
-                    '''
+                    sh 'terraform plan -out=tfplan'
                 }
             }
         }
@@ -76,14 +61,12 @@ pipeline {
                     [$class: 'AmazonWebServicesCredentialsBinding',
                      credentialsId: 'aws-creds']
                 ]) {
-                    sh '''
-                        terraform apply -auto-approve tfplan
-                    '''
+                    sh 'terraform apply -auto-approve tfplan'
                 }
             }
         }
 
-        stage('Display Terraform Outputs') {
+        stage('Terraform Outputs') {
             steps {
                 sh '''
                     echo "========== TERRAFORM OUTPUTS =========="
@@ -97,7 +80,6 @@ pipeline {
     post {
         success {
             echo 'Terraform deployment completed successfully.'
-            sh 'terraform output || true'
         }
 
         failure {
@@ -105,8 +87,7 @@ pipeline {
         }
 
         always {
-            archiveArtifacts artifacts: '**/*.tf, **/*.tfvars', fingerprint: true, allowEmptyArchive: true
-            cleanWs(deleteDirs: true)
+            archiveArtifacts artifacts: '**/*.tf, **/*.tfvars', allowEmptyArchive: true
         }
     }
 }
